@@ -2,6 +2,7 @@ use exitfailure::ExitFailure;
 use prost::Message;
 use std::io::Cursor;
 use std::io::Read;
+use std::io::{self, Write};
 use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -34,17 +35,24 @@ fn main() -> Result<(), ExitFailure> {
     file.read_to_end(&mut buffer)?;
 
     let cds = decode_cds(&buffer)?;
-    let ccspec = cds.chaincode_spec.unwrap();
-    let cctype = ccspec.r#type;
-    let ccid = ccspec.chaincode_id.unwrap();
-    let ccpath = ccid.path;
-    let ccname = ccid.name;
-    let ccversion = ccid.version;
 
-    println!("Type: {}", cctype);
-    println!("Path: {}", ccpath);
-    println!("Name: {}", ccname);
-    println!("Version: {}", ccversion);
+    if opt.extract_code {
+        let ccpkg = cds.code_package;
+
+        io::stdout().write_all(&ccpkg)?;
+    } else {
+        let ccspec = cds.chaincode_spec.unwrap();
+        let cctype = ccspec.r#type;
+        let ccid = ccspec.chaincode_id.unwrap();
+        let ccpath = ccid.path;
+        let ccname = ccid.name;
+        let ccversion = ccid.version;
+    
+        println!("Type: {}", cctype);
+        println!("Path: {}", ccpath);
+        println!("Name: {}", ccname);
+        println!("Version: {}", ccversion);
+    }
 
     Ok(())
 }
