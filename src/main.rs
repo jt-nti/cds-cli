@@ -1,7 +1,14 @@
 use exitfailure::ExitFailure;
-use failure::ResultExt;
+use prost::Message;
+use std::io::Cursor;
+use std::io::Read;
+use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
+
+pub mod fabric_protos {
+    include!(concat!(env!("OUT_DIR"), "/common.rs"));
+}
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "cds")]
@@ -15,12 +22,29 @@ struct CdsOpt {
     file: PathBuf,
 }
 
+pub fn decode_cds(buf: &[u8]) -> Result<fabric_protos::ChaincodeDeploymentSpec, prost::DecodeError> {
+    fabric_protos::ChaincodeDeploymentSpec::decode(&mut Cursor::new(buf))
+}
+
 fn main() -> Result<(), ExitFailure> {
     let opt = CdsOpt::from_args();
 
-    let content = std::fs::read_to_string(&opt.file)
-        .with_context(|_| format!("could not read file `{}`", &opt.file.display()))?;
-    println!("file content: {}", content);
+    let mut buffer = Vec::new();
+    let mut file = File::open(&opt.file)?;
+    file.read_to_end(&mut buffer)?;
+
+    let cds = decode_cds(&buffer)?;
+    let ccspec = cds.chaincode_spec.unwrap();
+    let cctype = ccspec.r#type;
+    let ccid = ccspec.chaincode_id.unwrap();
+    let ccpath = ccid.path;
+    let ccname = ccid.name;
+    let ccversion = ccid.version;
+
+    println!("Type: {}", cctype);
+    println!("Path: {}", ccpath);
+    println!("Name: {}", ccname);
+    println!("Version: {}", ccversion);
 
     Ok(())
 }
