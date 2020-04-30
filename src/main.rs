@@ -3,6 +3,7 @@ mod lib;
 
 use exitfailure::ExitFailure;
 use lib::ChaincodeDeploymentSpecFile;
+use std::io::{self, Write};
 
 fn main() -> Result<(), ExitFailure> {
     let opt = cli::parse_args();
@@ -10,9 +11,12 @@ fn main() -> Result<(), ExitFailure> {
     let cds = ChaincodeDeploymentSpecFile::new(&opt.file)?;
 
     if opt.extract_code {
-        cds.write_ccpkg()?;
+        let ccpkg = cds.ccpkg();
+        io::stdout().write_all(ccpkg)?;
     } else {
-        cds.write_info();
+        let info = cds.format_info();
+        let buffer = info.as_bytes();
+        io::stdout().write_all(buffer)?;
     }
 
     Ok(())
