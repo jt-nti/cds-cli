@@ -1,5 +1,5 @@
 pub mod fabric_protos {
-    include!(concat!(env!("OUT_DIR"), "/common.rs"));
+    include!(concat!(env!("OUT_DIR"), "/fabric.rs"));
 }
 
 use prost::Message;
