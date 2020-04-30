@@ -1,19 +1,18 @@
-use exitfailure::ExitFailure;
-
 mod cli;
 mod lib;
+
+use exitfailure::ExitFailure;
+use lib::ChaincodeDeploymentSpecFile;
 
 fn main() -> Result<(), ExitFailure> {
     let opt = cli::parse_args();
 
-    let buffer = lib::read_cds(&opt.file)?;
-
-    let cds = lib::decode_cds(&buffer)?;
+    let cds = ChaincodeDeploymentSpecFile::new(&opt.file)?;
 
     if opt.extract_code {
-        lib::extract_code(&cds)?;
+        cds.write_ccpkg()?;
     } else {
-        lib::show_info(&cds);
+        cds.write_info();
     }
 
     Ok(())

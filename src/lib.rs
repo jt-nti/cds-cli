@@ -1,43 +1,50 @@
+pub mod fabric_protos {
+    include!(concat!(env!("OUT_DIR"), "/common.rs"));
+}
+
 use prost::Message;
 use std::io::Cursor;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::PathBuf;
+use fabric_protos::ChaincodeDeploymentSpec;
 
-pub mod fabric_protos {
-    include!(concat!(env!("OUT_DIR"), "/common.rs"));
+pub struct ChaincodeDeploymentSpecFile {
+    cds: ChaincodeDeploymentSpec
 }
 
-pub fn read_cds(file: &PathBuf) -> Result<Vec<u8>, std::io::Error> {
-    let mut buffer = Vec::new();
-    let mut file = File::open(file)?;
-    file.read_to_end(&mut buffer)?;
+impl ChaincodeDeploymentSpecFile {
+    pub fn new(file: &PathBuf) -> Result<ChaincodeDeploymentSpecFile, std::io::Error> {
+        let mut buffer = Vec::new();
+        let mut file = File::open(file)?;
+        file.read_to_end(&mut buffer)?;
 
-    Ok(buffer)
-}
+        let cds = fabric_protos::ChaincodeDeploymentSpec::decode(&mut Cursor::new(buffer))?;
 
-pub fn decode_cds(buf: &[u8]) -> Result<fabric_protos::ChaincodeDeploymentSpec, prost::DecodeError> {
-    fabric_protos::ChaincodeDeploymentSpec::decode(&mut Cursor::new(buf))
-}
+        Ok(ChaincodeDeploymentSpecFile {
+            cds: cds
+        })
+    }
 
-pub fn extract_code(cds: &fabric_protos::ChaincodeDeploymentSpec) -> Result<(), std::io::Error> {
-    let ccpkg = &cds.code_package;
+    pub fn write_ccpkg(&self) -> Result<(), std::io::Error> {
+        let ccpkg = &self.cds.code_package;
 
-    io::stdout().write_all(&ccpkg)?;
+        io::stdout().write_all(&ccpkg)?;
 
-    Ok(())
-}
+        Ok(())
+    }
 
-pub fn show_info(cds: &fabric_protos::ChaincodeDeploymentSpec) {
-    let ccspec = cds.chaincode_spec.as_ref().unwrap();
-    let cctype = ccspec.r#type;
-    let ccid = ccspec.chaincode_id.as_ref().unwrap();
-    let ccpath = &ccid.path;
-    let ccname = &ccid.name;
-    let ccversion = &ccid.version;
+    pub fn write_info(&self) {
+        let ccspec = &self.cds.chaincode_spec.as_ref().unwrap();
+        let cctype = ccspec.r#type;
+        let ccid = ccspec.chaincode_id.as_ref().unwrap();
+        let ccpath = &ccid.path;
+        let ccname = &ccid.name;
+        let ccversion = &ccid.version;
 
-    println!("Type: {}", cctype);
-    println!("Path: {}", ccpath);
-    println!("Name: {}", ccname);
-    println!("Version: {}", ccversion);
+        println!("Type: {}", cctype);
+        println!("Path: {}", ccpath);
+        println!("Name: {}", ccname);
+        println!("Version: {}", ccversion);
+    }
 }
