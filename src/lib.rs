@@ -3,9 +3,8 @@ pub mod fabric_protos {
 }
 
 use prost::Message;
-use std::io::Cursor;
 use std::fs::File;
-use std::io::Read;
+use std::io::{self, Cursor, Read, Write};
 use std::path::PathBuf;
 use fabric_protos::ChaincodeDeploymentSpec;
 
@@ -31,15 +30,38 @@ impl ChaincodeDeploymentSpecFile {
     }
 
     pub fn format_info(&self) -> String {
+        use fabric_protos::chaincode_spec::Type;
+
         let ccspec = &self.cds.chaincode_spec.as_ref().unwrap();
         let cctype = ccspec.r#type;
         let ccid = ccspec.chaincode_id.as_ref().unwrap();
         let ccpath = &ccid.path;
         let ccname = &ccid.name;
         let ccversion = &ccid.version;
+        
+        let typename = match Type::from_i32(cctype) {
+            Some(Type::Undefined) => "Undefined",
+            Some(Type::Golang) => "Golang",
+            Some(Type::Node) => "Node",
+            Some(Type::Car) => "Car",
+            Some(Type::Java) => "Java",
+            None => "Invalid",
+        };
 
-        format!("Type: {}\nPath: {}\nName: {}\nVersion: {}\n", cctype, ccpath, ccname, ccversion)
+        format!("Type: {}\nPath: {}\nName: {}\nVersion: {}\n", typename, ccpath, ccname, ccversion)
     }
+}
+
+pub fn write_output(buffer: &[u8], output: Option<PathBuf>) -> Result<(), std::io::Error> {
+    match output {
+        Some(path) => {
+            let mut file = File::create(path)?;
+            file.write_all(buffer)?;
+        },
+        None => io::stdout().write_all(buffer)?
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

@@ -4,7 +4,11 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "cds")]
 pub struct Options {
-    /// Extracts chaincode
+    /// Output file (defaults to stdout)
+    #[structopt(short, long, parse(from_os_str))]
+    pub output: Option<PathBuf>,
+
+    /// Extracts chaincode package
     #[structopt(short = "x", long)]
     pub extract_code: bool,
 
