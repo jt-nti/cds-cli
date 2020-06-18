@@ -12,6 +12,7 @@ deploy:
     on:
       tags: true
       branch: master
+    file_glob: true
     file:
       - target/release/cds-*
     api_key: $GITHUB_API_KEY
