@@ -112,6 +112,6 @@ mod tests {
 
         let info = cds.format_info();
 
-        assert_eq!(info, "Type: 4\nPath: /tmp/fabtest\nName: fabtest\nVersion: 1.0.0\n");
+        assert_eq!(info, "Type: Java\nPath: /tmp/fabtest\nName: fabtest\nVersion: 1.0.0\n");
     }
 }
