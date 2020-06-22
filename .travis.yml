@@ -3,6 +3,7 @@ cache: cargo
 os:
 - linux
 - osx
+- windows
 script: cargo build --verbose --release; cargo test --verbose
 after_success:
   - mv target/release/cds "target/release/cds-${TRAVIS_TAG:-unstable}-$TRAVIS_OS_NAME"
