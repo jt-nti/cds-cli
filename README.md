@@ -29,4 +29,6 @@ configtxlator proto_decode --type protos.ChaincodeDeploymentSpec --input mysteri
 jq -j .code_package mysterious.json | base64 --decode | tar -tvf -
 ```
 
+There is another [cdstool](https://github.com/btl5037/cdstool) which you can install using `go get github.com/btl5037/cdstool` assuming you have Go installed and `$GOPATH/bin` on your path
+
 You can also unpack files from a .cds file using [7-Zip](https://www.7-zip.org)
