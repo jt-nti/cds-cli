@@ -7,13 +7,49 @@ use std::fs::File;
 use std::io::{self, Cursor, Read, Write};
 use std::path::PathBuf;
 use fabric_protos::ChaincodeDeploymentSpec;
+use fabric_protos::chaincode_spec::Type;
 
 pub struct ChaincodeDeploymentSpecFile {
     cds: ChaincodeDeploymentSpec
 }
 
 impl ChaincodeDeploymentSpecFile {
-    pub fn new(file: &PathBuf) -> Result<ChaincodeDeploymentSpecFile, std::io::Error> {
+    pub fn new(name: String, version: String, language: String, path: String, file: &PathBuf) -> Result<ChaincodeDeploymentSpecFile, std::io::Error> {
+        let mut buffer = Vec::new();
+        let mut file = File::open(file)?;
+        file.read_to_end(&mut buffer)?;
+
+        let ccid = fabric_protos::ChaincodeId{
+            path: path,
+            name: name,
+            version: version,
+        };
+
+        let r#type = match language.as_str() {
+            "golang" => Type::Golang,
+            "java" => Type::Java,
+            "node" => Type::Node,
+            _ => Type::Undefined,
+        };
+
+        let chaincode_spec = fabric_protos::ChaincodeSpec{
+            chaincode_id: Some(ccid),
+            r#type: r#type as i32,
+            input: None,
+            timeout: 0,
+        };
+
+        let cds = fabric_protos::ChaincodeDeploymentSpec{
+            chaincode_spec: Some(chaincode_spec),
+            code_package: buffer,
+        };
+
+        Ok(ChaincodeDeploymentSpecFile {
+            cds: cds
+        })
+    }
+
+    pub fn from(file: &PathBuf) -> Result<ChaincodeDeploymentSpecFile, std::io::Error> {
         let mut buffer = Vec::new();
         let mut file = File::open(file)?;
         file.read_to_end(&mut buffer)?;
@@ -25,13 +61,17 @@ impl ChaincodeDeploymentSpecFile {
         })
     }
 
+    pub fn encode(&self) -> Result<Vec<u8>, std::io::Error>  {
+        let mut buffer = Vec::new();
+        &self.cds.encode(&mut buffer)?;
+        Ok(buffer)
+    }
+
     pub fn ccpkg(&self) -> &Vec<u8> {
         &self.cds.code_package
     }
 
     pub fn format_info(&self) -> String {
-        use fabric_protos::chaincode_spec::Type;
-
         let ccspec = &self.cds.chaincode_spec.as_ref().unwrap();
         let cctype = ccspec.r#type;
         let ccid = ccspec.chaincode_id.as_ref().unwrap();
@@ -113,5 +153,15 @@ mod tests {
         let info = cds.format_info();
 
         assert_eq!(info, "Type: Java\nPath: /tmp/fabtest\nName: fabtest\nVersion: 1.0.0\n");
+    }
+
+    #[test]
+    fn it_should_encode_data() {
+        let cds = mock_cds();
+        let expected_buffer = vec![10, 36, 8, 4, 18, 30, 10, 12, 47, 116, 109, 112, 47, 102, 97, 98, 116, 101, 115, 116, 18, 7, 102, 97, 98, 116, 101, 115, 116, 26, 5, 49, 46, 48, 46, 48, 32, 42, 26, 1, 42];
+
+        let buffer = cds.encode();
+
+        assert_eq!(buffer.unwrap(), expected_buffer);
     }
 }
