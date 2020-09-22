@@ -1,8 +1,8 @@
 # cds-cli
 
-Small cli to look at Hyperledger Fabric .cds files
+Simple tool to manipulate Hyperledger Fabric .cds files
 
-*Note: this project was only created for something to experiment with while learning Rust!*
+*Note: this project is unsupported and was only created for something to experiment with while learning Rust!*
 
 ## Downloads
 

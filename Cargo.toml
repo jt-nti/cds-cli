@@ -1,6 +1,7 @@
 [package]
 name = "cds"
 version = "0.2.0"
+description = "Simple tool to manipulate Hyperledger Fabric .cds files"
 authors = ["James Taylor <jamest@uk.ibm.com>"]
 edition = "2018"
 
@@ -10,7 +11,7 @@ edition = "2018"
 exitfailure = "0.5.1"
 failure = "0.1.7"
 prost = "0.6.1"
-structopt = "0.3"
+clap = "2.33.3"
 
 [build-dependencies]
 prost-build = "0.6.1"
