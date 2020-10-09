@@ -6,18 +6,51 @@ Simple tool to manipulate Hyperledger Fabric .cds files
 
 ## Downloads
 
-Prebuilt binaries for Linux, OSX, and Windows can be downloaded from the latest release on the [releases page](https://github.com/jt-nti/cds-cli/releases).  
+Prebuilt binaries for Linux, OSX, and Windows can be downloaded from the latest release on the [releases page](https://github.com/jt-nti/cds-cli/releases).
+
+For example, to install on linux:
+
+```
+curl -L "https://github.com/jt-nti/cds-cli/releases/download/0.3.0/cds-0.3.0-linux" -o cds && chmod u+x cds
+```
 
 ## Usage
 
 Type `cds --help` to print help information.
 
-## Example
+## Examples
+
+### View .cds file contents
 
 To list the files inside a .cds file:
 
 ```
 cds -x mysterious.cds | tar -tvf -
+```
+
+### Create new .cds file
+
+You will need a .tgz file containing the chaincode you want to package.
+The chaincode **must** be in a _src/_ directory.
+For example, assuming you have cloned the [fabric-samples](https://github.com/hyperledger/fabric-samples) repository:
+
+```
+tar -czf "fabcarcc.tgz" --transform s/go/src/ -C ./fabric-samples/chaincode/fabcar/ go
+```
+
+This should create a `fabcarcc.tgz` file with the following contents:
+
+```
+src/
+src/fabcar.go
+src/go.mod
+src/go.sum
+```
+
+Then to create a .cds file:
+
+```
+./cds --create --lang golang --name fabcarcc --version 1 --output fabcarcc.cds fabcarcc.tgz
 ```
 
 ## Alternatives
