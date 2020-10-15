@@ -6,8 +6,12 @@ use prost::Message;
 use std::fs::File;
 use std::io::{self, Cursor, Read, Write};
 use std::path::PathBuf;
+use std::ffi::OsStr;
 use fabric_protos::ChaincodeDeploymentSpec;
 use fabric_protos::chaincode_spec::Type;
+
+const NAME: Option<&'static str> = option_env!("CARGO_PKG_NAME");
+const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 pub struct ChaincodeDeploymentSpecFile {
     cds: ChaincodeDeploymentSpec
@@ -104,6 +108,16 @@ pub fn write_output(buffer: &[u8], output: Option<PathBuf>) -> Result<(), std::i
     Ok(())
 }
 
+pub fn get_cds_path(input_path: &PathBuf, module: &str) -> String {
+    let cds_path = if module.trim().is_empty() {
+        format!("/Users/{}{}/{}", NAME.unwrap_or("cds"), VERSION.unwrap_or(""), input_path.file_stem().unwrap_or(OsStr::new("unknown")).to_string_lossy())
+    } else {
+        module.to_string()
+    };
+
+    cds_path
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -163,5 +177,23 @@ mod tests {
         let buffer = cds.encode();
 
         assert_eq!(buffer.unwrap(), expected_buffer);
+    }
+
+    #[test]
+    fn it_should_get_default_cds_path() {
+        let input_path = PathBuf::from("/home/conga/fabcar.tgz");
+        let module = "";
+        let cds_path = get_cds_path(&input_path, module);
+
+        assert_eq!(cds_path, "/Users/cds0.3.0/fabcar".to_string());
+    }
+
+    #[test]
+    fn it_should_get_golang_cds_path() {
+        let input_path = PathBuf::from("/home/conga/fabcar.tgz");
+        let module = "github.com/hyperledger/fabric-samples/chaincode/fabcar/go";
+        let cds_path = get_cds_path(&input_path, module);
+
+        assert_eq!(cds_path, "github.com/hyperledger/fabric-samples/chaincode/fabcar/go".to_string());
     }
 }
