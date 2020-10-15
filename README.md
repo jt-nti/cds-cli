@@ -50,10 +50,14 @@ src/go.sum
 Then to create a .cds file:
 
 ```
-./cds --create --lang golang --name fabcarcc --version 1 --output fabcarcc.cds fabcarcc.tgz
+./cds --create --lang golang --name fabcarcc --version 1 --module github.com/hyperledger/fabric-samples/chaincode/fabcar/go --output fabcarcc.cds fabcarcc.tgz
 ```
 
+**Note:** the `--module` option is only required for golang chaincode and must match the module defined in the `go.mod` file
+
 ## Alternatives
+
+### View .cds file contents
 
 The [configtxlator](https://hyperledger-fabric.readthedocs.io/en/release-2.0/commands/configtxlator.html) command can be used to decode .cds files. For example, to list the files inside a .cds file:
 
@@ -65,3 +69,11 @@ jq -j .code_package mysterious.json | base64 --decode | tar -tvf -
 There is another [cdstool](https://github.com/btl5037/cdstool) which you can install using `go get github.com/btl5037/cdstool` assuming you have Go installed and `$GOPATH/bin` on your path
 
 You can also unpack files from a .cds file using [7-Zip](https://www.7-zip.org)
+
+### Create new .cds file
+
+Use the `peer chaincode package` command. For example:
+
+```
+peer chaincode package fabcarcc.cds --lang golang --name fabcarcc --version 1 --path ./fabric-samples/chaincode/fabcar/go
+```

@@ -7,10 +7,6 @@ use clap::{Arg, App};
 use exitfailure::ExitFailure;
 use lib::ChaincodeDeploymentSpecFile;
 use std::path::PathBuf;
-use std::ffi::OsStr;
-
-const NAME: Option<&'static str> = option_env!("CARGO_PKG_NAME");
-const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 fn main() -> Result<(), ExitFailure> {
     let matches = App::new(crate_name!())
@@ -55,6 +51,12 @@ fn main() -> Result<(), ExitFailure> {
             .requires("create")
             .value_name("LANGUAGE")
             .possible_values(&["golang", "java", "node"]))
+        .arg(Arg::with_name("module")
+            .short("m")
+            .long("module")
+            .help("Golang module")
+            .required_if("language", "golang")
+            .value_name("MODULE"))
         .get_matches();
 
     let input_path = PathBuf::from(matches.value_of("INPUT").unwrap());
@@ -68,7 +70,8 @@ fn main() -> Result<(), ExitFailure> {
         let name = matches.value_of("name").unwrap().to_string();
         let version = matches.value_of("version").unwrap().to_string();
         let language = matches.value_of("language").unwrap().to_string();
-        let path = format!("/Users/{}{}/{}", NAME.unwrap_or("cds"), VERSION.unwrap_or(""), input_path.file_stem().unwrap_or(OsStr::new("unknown")).to_string_lossy());
+        let module = matches.value_of("module").unwrap_or("");
+        let path = lib::get_cds_path(&input_path, module);
         let cds = ChaincodeDeploymentSpecFile::new(name, version, language, path, &input_path)?;
 
         let buffer = cds.encode()?;
