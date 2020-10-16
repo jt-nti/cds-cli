@@ -1,6 +1,6 @@
 [package]
 name = "cds"
-version = "0.3.0"
+version = "0.4.0"
 description = "Simple tool to manipulate Hyperledger Fabric .cds files"
 authors = ["James Taylor <jamest@uk.ibm.com>"]
 edition = "2018"

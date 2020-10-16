@@ -185,7 +185,7 @@ mod tests {
         let module = "";
         let cds_path = get_cds_path(&input_path, module);
 
-        assert_eq!(cds_path, "/Users/cds0.3.0/fabcar".to_string());
+        assert_eq!(cds_path, "/Users/cds0.4.0/fabcar".to_string());
     }
 
     #[test]

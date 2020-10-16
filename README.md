@@ -11,7 +11,7 @@ Prebuilt binaries for Linux, OSX, and Windows can be downloaded from the latest 
 For example, to install on linux:
 
 ```
-curl -L "https://github.com/jt-nti/cds-cli/releases/download/0.3.0/cds-0.3.0-linux" -o cds && chmod u+x cds
+curl -L "https://github.com/jt-nti/cds-cli/releases/download/0.4.0/cds-0.4.0-linux" -o cds && chmod u+x cds
 ```
 
 ## Usage
