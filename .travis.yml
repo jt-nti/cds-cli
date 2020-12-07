@@ -20,8 +20,12 @@ script: |
     cargo build --verbose --release
     cargo test --verbose
   fi
-after_success:
-  - mv target/release/cds "target/release/cds-${TRAVIS_TAG:-unstable}-$TRAVIS_OS_NAME"
+after_success: |
+  if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+    mv target/x86_64-unknown-linux-musl/release/cds "target/release/cds-${TRAVIS_TAG:-unstable}-$TRAVIS_OS_NAME"
+  else
+    mv target/release/cds "target/release/cds-${TRAVIS_TAG:-unstable}-$TRAVIS_OS_NAME"
+  fi
 deploy:
   - provider: releases
     skip_cleanup: true
