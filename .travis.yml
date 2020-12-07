@@ -8,6 +8,10 @@ before_install: |
   if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     sudo apt-get -y install musl-tools
   fi
+before_script: |
+  if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+    rustup target add x86_64-unknown-linux-musl
+  fi
 script: |
   if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     cargo build --target x86_64-unknown-linux-musl --verbose --release
