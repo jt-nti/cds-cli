@@ -1,14 +1,10 @@
-pub mod fabric_protos {
-    include!(concat!(env!("OUT_DIR"), "/fabric.rs"));
-}
-
-use prost::Message;
 use std::fs::File;
-use std::io::{self, Cursor, Read, Write};
+use std::io::{self, Read, Write};
 use std::path::PathBuf;
 use std::ffi::OsStr;
-use fabric_protos::ChaincodeDeploymentSpec;
-use fabric_protos::chaincode_spec::Type;
+use fabric_gateway_protos::ChaincodeDeploymentSpec;
+use fabric_gateway_protos::ChaincodeSpec_Type;
+use protobuf::Message;
 
 const NAME: Option<&'static str> = option_env!("CARGO_PKG_NAME");
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -23,30 +19,41 @@ impl ChaincodeDeploymentSpecFile {
         let mut file = File::open(file)?;
         file.read_to_end(&mut buffer)?;
 
-        let ccid = fabric_protos::ChaincodeId{
-            path: path,
-            name: name,
-            version: version,
-        };
+        let mut ccid = fabric_gateway_protos::ChaincodeID::new();
+        ccid.set_path(path);
+        ccid.set_name(name);
+        ccid.set_version(version);
+        // let ccid = fabric_protos::ChaincodeId{
+        //     path: path,
+        //     name: name,
+        //     version: version,
+        // };
 
         let r#type = match language.as_str() {
-            "golang" => Type::Golang,
-            "java" => Type::Java,
-            "node" => Type::Node,
-            _ => Type::Undefined,
+            "golang" => ChaincodeSpec_Type::GOLANG,
+            "java" => ChaincodeSpec_Type::JAVA,
+            "node" => ChaincodeSpec_Type::NODE,
+            _ => ChaincodeSpec_Type::UNDEFINED,
         };
 
-        let chaincode_spec = fabric_protos::ChaincodeSpec{
-            chaincode_id: Some(ccid),
-            r#type: r#type as i32,
-            input: None,
-            timeout: 0,
-        };
+        let mut chaincode_spec = fabric_gateway_protos::ChaincodeSpec::new();
+        chaincode_spec.set_chaincode_id(ccid);
+        chaincode_spec.set_field_type(r#type);
+        chaincode_spec.set_timeout(0);
+        // let chaincode_spec = fabric_gateway_protos::ChaincodeSpec{
+        //     chaincode_id: Some(ccid),
+        //     field_type: r#type,
+        //     input: SingularPtrField::none(),
+        //     timeout: 0,
+        // };
 
-        let cds = fabric_protos::ChaincodeDeploymentSpec{
-            chaincode_spec: Some(chaincode_spec),
-            code_package: buffer,
-        };
+        let mut cds = fabric_gateway_protos::ChaincodeDeploymentSpec::new();
+        cds.set_chaincode_spec(chaincode_spec);
+        cds.set_code_package(buffer);
+        // let cds = fabric_gateway_protos::ChaincodeDeploymentSpec{
+        //     chaincode_spec: Some(chaincode_spec),
+        //     code_package: buffer,
+        // };
 
         Ok(ChaincodeDeploymentSpecFile {
             cds: cds
@@ -58,7 +65,8 @@ impl ChaincodeDeploymentSpecFile {
         let mut file = File::open(file)?;
         file.read_to_end(&mut buffer)?;
 
-        let cds = fabric_protos::ChaincodeDeploymentSpec::decode(&mut Cursor::new(buffer))?;
+        let cds = fabric_gateway_protos::ChaincodeDeploymentSpec::parse_from_bytes(&buffer)?;
+        // let cds = fabric_protos::ChaincodeDeploymentSpec::decode(&mut Cursor::new(buffer))?;
 
         Ok(ChaincodeDeploymentSpecFile {
             cds: cds
@@ -67,7 +75,8 @@ impl ChaincodeDeploymentSpecFile {
 
     pub fn encode(&self) -> Result<Vec<u8>, std::io::Error>  {
         let mut buffer = Vec::new();
-        &self.cds.encode(&mut buffer)?;
+        buffer = self.cds.write_to_bytes()?;
+        // &self.cds.encode(&mut buffer)?;
         Ok(buffer)
     }
 
@@ -77,19 +86,18 @@ impl ChaincodeDeploymentSpecFile {
 
     pub fn format_info(&self) -> String {
         let ccspec = &self.cds.chaincode_spec.as_ref().unwrap();
-        let cctype = ccspec.r#type;
+        let cctype = ccspec.field_type;
         let ccid = ccspec.chaincode_id.as_ref().unwrap();
         let ccpath = &ccid.path;
         let ccname = &ccid.name;
         let ccversion = &ccid.version;
         
-        let typename = match Type::from_i32(cctype) {
-            Some(Type::Undefined) => "Undefined",
-            Some(Type::Golang) => "Golang",
-            Some(Type::Node) => "Node",
-            Some(Type::Car) => "Car",
-            Some(Type::Java) => "Java",
-            None => "Invalid",
+        let typename = match cctype {
+            ChaincodeSpec_Type::UNDEFINED => "Undefined",
+            ChaincodeSpec_Type::GOLANG => "Golang",
+            ChaincodeSpec_Type::NODE => "Node",
+            ChaincodeSpec_Type::CAR => "Car",
+            ChaincodeSpec_Type::JAVA => "Java",
         };
 
         format!("Type: {}\nPath: {}\nName: {}\nVersion: {}\n", typename, ccpath, ccname, ccversion)
@@ -123,27 +131,38 @@ mod tests {
     use super::*;
 
     fn mock_cds() -> ChaincodeDeploymentSpecFile {
-        let chaincode_type = fabric_protos::chaincode_spec::Type::Java;
+        let chaincode_type = fabric_gateway_protos::ChaincodeSpec_Type::JAVA;
 
-        let chaincode_id = fabric_protos::ChaincodeId {
-            path: "/tmp/fabtest".to_owned(),
-            name: "fabtest".to_owned(),
-            version: "1.0.0".to_owned()
-        };
+        let mut chaincode_id = fabric_gateway_protos::ChaincodeID::new();
+        chaincode_id.set_path("/tmp/fabtest".to_owned());
+        chaincode_id.set_name("fabtest".to_owned());
+        chaincode_id.set_version("1.0.0".to_owned());
+        // let chaincode_id = fabric_protos::ChaincodeId {
+        //     path: "/tmp/fabtest".to_owned(),
+        //     name: "fabtest".to_owned(),
+        //     version: "1.0.0".to_owned()
+        // };
         
-        let chaincode_spec = fabric_protos::ChaincodeSpec {
-            r#type: chaincode_type as i32,
-            chaincode_id: Some(chaincode_id),
-            input: None,
-            timeout: 42
-        };
+        let mut chaincode_spec = fabric_gateway_protos::ChaincodeSpec::new();
+        chaincode_spec.set_field_type(chaincode_type);
+        chaincode_spec.set_chaincode_id(chaincode_id);
+        chaincode_spec.set_timeout(42);
+        // let chaincode_spec = fabric_protos::ChaincodeSpec {
+        //     r#type: chaincode_type as i32,
+        //     chaincode_id: Some(chaincode_id),
+        //     input: None,
+        //     timeout: 42
+        // };
 
         let code_package = vec![42];
 
-        let cds = fabric_protos::ChaincodeDeploymentSpec {
-            chaincode_spec: Some(chaincode_spec),
-            code_package: code_package
-        };
+        let mut cds = fabric_gateway_protos::ChaincodeDeploymentSpec::new();
+        cds.set_chaincode_spec(chaincode_spec);
+        cds.set_code_package(code_package);
+        // let cds = fabric_protos::ChaincodeDeploymentSpec {
+        //     chaincode_spec: Some(chaincode_spec),
+        //     code_package: code_package
+        // };
 
         ChaincodeDeploymentSpecFile {
             cds: cds

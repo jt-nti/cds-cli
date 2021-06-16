@@ -12,6 +12,5 @@ exitfailure = "0.5.1"
 failure = "0.1.7"
 prost = "0.6.1"
 clap = "2.33.3"
-
-[build-dependencies]
-prost-build = "0.6.1"
+protobuf = { version = "2.23", features = ["with-bytes"] }
+fabric_gateway_protos = { path = "/Users/jamest/Code/fabric-protos-bindings/fabric-protos-rust" }
